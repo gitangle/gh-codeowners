@@ -1,26 +1,54 @@
 package main
 
 import (
-	"fmt"
+	"flag"
+	"log"
+	"os"
+	"strings"
 
-	"github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/repository"
+
+	"github.com/gitcheasy/gh-codeowners/internal/client"
+	"github.com/gitcheasy/gh-codeowners/internal/issues"
 )
 
 func main() {
-	fmt.Println("hi world, this is the gh-codeowners extension!")
-	client, err := api.DefaultRESTClient()
-	if err != nil {
-		fmt.Println(err)
-		return
+	org := flag.String("organization", "", "GitHub organization. Defaults to the GitHub organization of the repository in the current directory.")
+	ignoredRepos := flag.String("ignore-repos", "", "Comma-separated list of repository names to ignore.")
+	issuesExitCode := flag.Int("issues-exit-code", 3, "Exit code when issues were found (default 3)")
+
+	flag.Parse()
+
+	if *org == "" {
+		current, err := repository.Current()
+		exitOnError(err)
+		org = &current.Owner
 	}
-	response := struct {Login string}{}
-	err = client.Get("user", &response)
-	if err != nil {
-		fmt.Println(err)
-		return
+
+	var ignoredReposList []string
+	if *ignoredRepos != "" {
+		ignoredReposList = strings.Split(*ignoredRepos, ",")
 	}
-	fmt.Printf("running as %s\n", response.Login)
+	cli, err := client.NewGraphQLClient()
+	exitOnError(err)
+
+	invalidOwners, missingFiles, err := issues.ListCodeownersIssues(cli, *org, ignoredReposList)
+	exitOnError(err)
+
+	if len(missingFiles) == 0 && len(invalidOwners) == 0 {
+		log.Println("No issues found.")
+		os.Exit(0)
+	}
+	err = issues.PrintMissingOwnersFile(missingFiles, *org)
+	exitOnError(err)
+
+	err = issues.PrintInvalidOwners(invalidOwners, *org)
+	exitOnError(err)
+	os.Exit(*issuesExitCode)
 }
 
-// For more examples of using go-gh, see:
-// https://github.com/cli/go-gh/blob/trunk/example_gh_test.go
+func exitOnError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
