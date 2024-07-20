@@ -3,9 +3,9 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/gitcheasy/gh-codeowners/internal/cli"
-	"github.com/gitcheasy/gh-codeowners/internal/cli/validate"
-	"github.com/gitcheasy/gh-codeowners/internal/heredoc"
+	"github.com/gitangle/gh-codeowners/internal/cli"
+	"github.com/gitangle/gh-codeowners/internal/cli/validate"
+	"github.com/gitangle/gh-codeowners/internal/heredoc"
 )
 
 // NewValidate returns a cobra.Command for logging into a Botkube Cloud.

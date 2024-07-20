@@ -4,12 +4,12 @@ import (
 	"github.com/spf13/cobra"
 	"go.szostok.io/version/extension"
 
-	"github.com/gitcheasy/gh-codeowners/internal/cli"
-	"github.com/gitcheasy/gh-codeowners/internal/heredoc"
+	"github.com/gitangle/gh-codeowners/internal/cli"
+	"github.com/gitangle/gh-codeowners/internal/heredoc"
 )
 
 const (
-	orgName  = "gitcheasy"
+	orgName  = "gitangle"
 	repoName = "gh-codeowners"
 )
 

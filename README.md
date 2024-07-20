@@ -1,14 +1,14 @@
 ```ruby
-gh extension install github.com/gitcheasy/gh-codeowners
+gh extension install github.com/gitangle/gh-codeowners
 ```
 
 <p align="center">
-  <strong>✨ Oversee all your CODEOWNERS needs</strong>
+  <strong>✨ An all-in-one solution for your CODEOWNERS needs</strong>
 </p>
 
 GitHub CLI extension designed to simplify managing and validating CODEOWNERS files directly from your terminal or CI environment.
 
-
+![validate](./docs/assets/validate.gif)
 
 Like the idea? Give a GitHub star ⭐!
 
@@ -18,7 +18,7 @@ Like the idea? Give a GitHub star ⭐!
 To install the `codeowners` CLI extension, run:
 
 ```sh
-gh extension install github.com/gitcheasy/gh-codeowners
+gh extension install github.com/gitangle/gh-codeowners
 ```
 
 Navigate to your repository and run:

@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 
-	"github.com/gitcheasy/gh-codeowners/internal/cli/frontmatter"
+	"github.com/gitangle/gh-codeowners/internal/cli/frontmatter"
 )
 
 const (

@@ -54,7 +54,6 @@ func (p *Printer) PrintInvalidOwners(issues map[string][]string, organization st
 			fmt.Fprintln(&out, i)
 			fmt.Fprintln(&out, "```")
 		}
-		fmt.Fprintln(&out, "----")
 		fmt.Fprintln(&out, "")
 	}
 

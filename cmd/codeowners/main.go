@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/gitcheasy/gh-codeowners/cmd/codeowners/cmd"
+	"github.com/gitangle/gh-codeowners/cmd/codeowners/cmd"
 )
 
 func main() {

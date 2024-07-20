@@ -1,4 +1,4 @@
-module github.com/gitcheasy/gh-codeowners
+module github.com/gitangle/gh-codeowners
 
 go 1.21.6
 

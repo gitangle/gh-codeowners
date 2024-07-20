@@ -7,9 +7,9 @@ import (
 
 	"github.com/cli/go-gh/v2/pkg/repository"
 
-	"github.com/gitcheasy/gh-codeowners/internal/client"
-	"github.com/gitcheasy/gh-codeowners/internal/issues"
-	"github.com/gitcheasy/gh-codeowners/internal/stylex"
+	"github.com/gitangle/gh-codeowners/internal/client"
+	"github.com/gitangle/gh-codeowners/internal/issues"
+	"github.com/gitangle/gh-codeowners/internal/stylex"
 )
 
 var singleRepoNotSupportedMessage = fmt.Sprintf("Single repository lookup is not yet supported. %s", stylex.Underline("Please use '--all'."))
