@@ -1,25 +1,31 @@
 package issues
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 )
+
+// GraphQLQuery is the interface that allows to execute GraphQL queries against the GitHub GraphQL server.
+type GraphQLQuery interface {
+	QueryWithContext(ctx context.Context, name string, q any, variables map[string]any) error
+}
 
 // Finder finds GitHub issues for invalid CODEOWNERS files.
 type Finder struct {
 	ignoredRepos []string
+	owner        string
+	client       GraphQLQuery
 }
 
 // NewFinder creates a new Finder.
-func NewFinder(ignoredRepos string) *Finder {
-	return &Finder{ignoredRepos: strings.Split(ignoredRepos, ",")}
-}
-
-// GraphQLQuery is the interface that allows to execute GraphQL queries against the GitHub GraphQL server.
-type GraphQLQuery interface {
-	Query(name string, q any, variables map[string]any) error
+func NewFinder(cli GraphQLQuery, owner string, ignoredRepos []string) *Finder {
+	return &Finder{
+		owner:        owner,
+		client:       cli,
+		ignoredRepos: ignoredRepos,
+	}
 }
 
 // ListCodeownersIssuesOutput is the output of the ListCodeownersIssues function.
@@ -29,10 +35,10 @@ type ListCodeownersIssuesOutput struct {
 }
 
 // ListCodeownersIssues lists GitHub issues for invalid CODEOWNERS files.
-func (f *Finder) ListCodeownersIssues(client GraphQLQuery, org string, filters RepoOptions) (*ListCodeownersIssuesOutput, error) {
+func (f *Finder) ListCodeownersIssues(ctx context.Context, filters RepoOptions) (*ListCodeownersIssuesOutput, error) {
 	var errs []error
 	for _, q := range []RepoGetter{&UserQuery{}, &OrgQuery{}} {
-		err := client.Query("CodeownersIssues", q, ReposQueryVars(org, filters))
+		err := f.client.QueryWithContext(ctx, "CodeownersIssues", q, ReposQueryVars(f.owner, filters))
 		if err != nil {
 			errs = append(errs, fmt.Errorf("while executing GraphQL query: %w", err))
 			continue

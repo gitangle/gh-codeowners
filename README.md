@@ -27,7 +27,7 @@ Here are some common commands for using the `codeowners` extension:
 
 ```sh
 # Validate CODEOWNERS across all repositories
-gh codeowners validate -all
+gh codeowners validate --all
 
 # Validate CODEOWNERS for the current repository
 gh codeowners validate
