@@ -24,10 +24,10 @@ gh extension install github.com/gitangle/gh-codeowners
 Navigate to your repository and run:
 ```sh
 # Validate CODEOWNERS across all repos for the GitHub owner taken from the current repository directory.
-gh codeowners validate -all
+gh codeowners validate --all
 
 # Validate CODEOWNERS for a specific owner across all their repos
-gh codeowners validate -owner "mszostok"  -all
+gh codeowners validate --owner "mszostok"  --all
 ```
 
 ## Why?
