@@ -34,7 +34,8 @@ gh codeowners validate -owner "mszostok"  -all
 
 While GitHub's CODEOWNERS feature is powerful, interpreting the CODEOWNERS data outside of GitHub can be challenging. This tool helps streamline that process.
 
-### Exit Status Codes
+
+## Exit Status Codes
 
 The application uses exit status codes to indicate different types of errors:
 
