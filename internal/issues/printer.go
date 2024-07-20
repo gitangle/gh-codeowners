@@ -13,14 +13,36 @@ import (
 
 var issueIntro = regexp.MustCompile(`Unknown owner on (.*):(.*)`)
 
-func PrintInvalidOwners(issues map[string][]string, organization string) error {
+// Printer prints issues in Markdown format.
+type Printer struct {
+	termWidth int
+	terminal  term.Term
+	renderer  *glamour.TermRenderer
+}
+
+// NewPrinter creates a new Printer.
+func NewPrinter() (*Printer, error) {
 	terminal := term.FromEnv()
 	termWidth, _, _ := terminal.Size()
-	render := func(s ...string) string {
-		return fmt.Sprint(strings.Join(s, " "))
+
+	renderer, err := glamour.NewTermRenderer(glamour.WithWordWrap(termWidth), glamour.WithEnvironmentConfig())
+	if err != nil {
+		return nil, fmt.Errorf("while creating glamour renderer: %w", err)
 	}
 
-	if terminal.IsTerminalOutput() {
+	return &Printer{
+		terminal:  terminal,
+		termWidth: termWidth,
+		renderer:  renderer,
+	}, nil
+}
+
+// PrintInvalidOwners prints missing owners file in the Markdown format.
+func (p *Printer) PrintInvalidOwners(issues map[string][]string, organization string) error {
+	render := func(s ...string) string {
+		return strings.Join(s, " ")
+	}
+	if p.terminal.IsTerminalOutput() {
 		render = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Render
 	}
 
@@ -40,14 +62,9 @@ func PrintInvalidOwners(issues map[string][]string, organization string) error {
 		return nil
 	}
 
-	r, err := glamour.NewTermRenderer(glamour.WithWordWrap(termWidth), glamour.WithEnvironmentConfig())
-	if err != nil {
-		return fmt.Errorf("while creating glamour renderer: %w", err)
-	}
-
 	rawMd := fmt.Sprintf("# Invalid CODEOWNERS \n%s", out.String())
 
-	md, err := r.Render(rawMd)
+	md, err := p.renderer.Render(rawMd)
 	if err != nil {
 		return fmt.Errorf("while rendering markdown: %w", err)
 	}
@@ -55,38 +72,30 @@ func PrintInvalidOwners(issues map[string][]string, organization string) error {
 	md = strings.ReplaceAll(md, "^", render("^"))
 	md = issueIntro.ReplaceAllString(md, fmt.Sprintf("%s $2", render("Unknown owner on $1:")))
 
-	fmt.Fprintln(terminal.Out(), md)
+	fmt.Fprintln(p.terminal.Out(), md)
 
 	return nil
 }
 
-func PrintMissingOwnersFile(missingFiles []string, org string) error {
+// PrintMissingOwnersFile prints missing owners file in the Markdown format.
+func (p *Printer) PrintMissingOwnersFile(missingFiles []string, org string) error {
 	if len(missingFiles) == 0 {
 		return nil
 	}
 
-	terminal := term.FromEnv()
-	termWidth, _, _ := terminal.Size()
-
 	var out bytes.Buffer
 	for _, name := range missingFiles {
 		fmt.Fprintf(&out, "- [%s](https://github.com/%s/%s)\n", name, org, name)
-
-	}
-
-	r, err := glamour.NewTermRenderer(glamour.WithWordWrap(termWidth), glamour.WithEnvironmentConfig())
-	if err != nil {
-		return fmt.Errorf("while creating glamour renderer: %w", err)
 	}
 
 	rawMd := fmt.Sprintf("# Missing CODEOWNERS files \n%s", out.String())
 
-	md, err := r.Render(rawMd)
+	md, err := p.renderer.Render(rawMd)
 	if err != nil {
 		return fmt.Errorf("while rendering markdown: %w", err)
 	}
 
-	fmt.Fprintln(terminal.Out(), md)
+	fmt.Fprintln(p.terminal.Out(), md)
 
 	return nil
 }

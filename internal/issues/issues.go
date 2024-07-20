@@ -1,53 +1,55 @@
 package issues
 
 import (
+	"errors"
 	"fmt"
 	"slices"
-
-	graphql "github.com/cli/shurcooL-graphql"
+	"strings"
 )
+
+// Finder finds GitHub issues for invalid CODEOWNERS files.
+type Finder struct {
+	ignoredRepos []string
+}
+
+// NewFinder creates a new Finder.
+func NewFinder(ignoredRepos string) *Finder {
+	return &Finder{ignoredRepos: strings.Split(ignoredRepos, ",")}
+}
 
 // GraphQLQuery is the interface that allows to execute GraphQL queries against the GitHub GraphQL server.
 type GraphQLQuery interface {
 	Query(name string, q any, variables map[string]any) error
 }
 
-func ListCodeownersIssues(client GraphQLQuery, organization string, ignoredRepos []string) (map[string][]string, []string, error) {
-	var query struct {
-		Organization struct {
-			Repositories struct {
-				Nodes []struct {
-					Name       string
-					URL        string
-					Codeowners *struct {
-						Errors []struct {
-							Path       string
-							Source     string
-							Kind       string
-							Line       int
-							Message    string
-							Suggestion string
-						}
-					} `graphql:"codeowners"`
-				}
-			} `graphql:"repositories(first: 100, visibility: PUBLIC)"`
-		} `graphql:"organization(login: $owner)"`
+// ListCodeownersIssuesOutput is the output of the ListCodeownersIssues function.
+type ListCodeownersIssuesOutput struct {
+	MissingOwnersFiles []string
+	InvalidOwners      map[string][]string
+}
+
+// ListCodeownersIssues lists GitHub issues for invalid CODEOWNERS files.
+func (f *Finder) ListCodeownersIssues(client GraphQLQuery, org string, filters RepoOptions) (*ListCodeownersIssuesOutput, error) {
+	var errs []error
+	for _, q := range []RepoGetter{&UserQuery{}, &OrgQuery{}} {
+		err := client.Query("CodeownersIssues", q, ReposQueryVars(org, filters))
+		if err != nil {
+			errs = append(errs, fmt.Errorf("while executing GraphQL query: %w", err))
+			continue
+		}
+		return f.collectIssues(q.GetRepositories()), nil
 	}
 
-	variables := map[string]interface{}{
-		"owner": graphql.String(organization),
-	}
-	err := client.Query("OrgCodeownersIssues", &query, variables)
-	if err != nil {
-		return nil, nil, fmt.Errorf("while executing GraphQL query: %w", err)
-	}
+	return nil, errors.Join(errs...)
+}
 
+func (f *Finder) collectIssues(repos GQLRepositories) *ListCodeownersIssuesOutput {
 	var (
 		missing []string
 		issues  = map[string][]string{}
 	)
-	for _, repo := range query.Organization.Repositories.Nodes {
-		if slices.Contains(ignoredRepos, repo.Name) {
+	for _, repo := range repos.Nodes {
+		if slices.Contains(f.ignoredRepos, repo.Name) {
 			continue
 		}
 
@@ -65,5 +67,8 @@ func ListCodeownersIssues(client GraphQLQuery, organization string, ignoredRepos
 		}
 	}
 
-	return issues, missing, nil
+	return &ListCodeownersIssuesOutput{
+		MissingOwnersFiles: missing,
+		InvalidOwners:      issues,
+	}
 }
