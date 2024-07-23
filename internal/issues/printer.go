@@ -3,6 +3,7 @@ package issues
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -24,8 +25,16 @@ type Printer struct {
 func NewPrinter() (*Printer, error) {
 	terminal := term.FromEnv()
 	termWidth, _, _ := terminal.Size()
+	opts := []glamour.TermRendererOption{
+		glamour.WithWordWrap(termWidth),
+	}
+	if !terminal.IsColorEnabled() {
+		opts = append(opts, glamour.WithStyles(glamour.NoTTYStyleConfig))
+	} else {
+		opts = append(opts, glamour.WithStylePath(getEnvironmentStyle()))
+	}
 
-	renderer, err := glamour.NewTermRenderer(glamour.WithWordWrap(termWidth), glamour.WithEnvironmentConfig())
+	renderer, err := glamour.NewTermRenderer(opts...)
 	if err != nil {
 		return nil, fmt.Errorf("while creating glamour renderer: %w", err)
 	}
@@ -97,4 +106,13 @@ func (p *Printer) PrintMissingOwnersFile(missingFiles []string, org string) erro
 	fmt.Fprintln(p.terminal.Out(), md)
 
 	return nil
+}
+
+func getEnvironmentStyle() string {
+	glamourStyle := os.Getenv("GLAMOUR_STYLE")
+	if glamourStyle == "" {
+		glamourStyle = glamour.AutoStyle
+	}
+
+	return glamourStyle
 }
